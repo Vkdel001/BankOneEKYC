@@ -36,6 +36,8 @@ interface Ticket {
   details: string;
   status: string;
   history: { date: string; action: string }[];
+  requestType?: string; // Added to store request type
+  attachment?: File | null; // Added to store attachment
 }
 
 const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline }) => {
@@ -49,6 +51,8 @@ const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline
   const [showNewRequestModal, setShowNewRequestModal] = useState(false);
   const [newRequestCompany, setNewRequestCompany] = useState('');
   const [newRequestDetails, setNewRequestDetails] = useState('');
+  const [newRequestType, setNewRequestType] = useState(''); // Added for request type
+  const [newRequestAttachment, setNewRequestAttachment] = useState<File | null>(null); // Added for attachment
 
   // Manage service tickets in state so we can add new ones
   const [serviceTickets, setServiceTickets] = useState<Ticket[]>([
@@ -136,6 +140,14 @@ const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline
         'Partnership Bank Account Resolution',
       ],
     },
+  ];
+
+  // Request types for dropdown
+  const requestTypes = [
+    'Check Book',
+    'Change Signatory',
+    'Transfer Request',
+    'KYC Update',
   ];
 
   const toggleDropdown = (dropdownName: string) => {
@@ -402,6 +414,24 @@ const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline
               <h3 className="text-xl font-semibold mb-2">Create New Service Request</h3>
 
               <div>
+                <label className="block font-medium mb-1">Request Type:</label>
+                <select
+                  value={newRequestType}
+                  onChange={(e) => setNewRequestType(e.target.value)}
+                  className="w-full border border-gray-300 rounded-md p-2"
+                >
+                  <option value="" disabled>
+                    Select request type
+                  </option>
+                  {requestTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
                 <label className="block font-medium mb-1">Company Name:</label>
                 <input
                   type="text"
@@ -423,12 +453,23 @@ const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline
                 />
               </div>
 
+              <div>
+                <label className="block font-medium mb-1">Attachment:</label>
+                <input
+                  type="file"
+                  onChange={(e) => setNewRequestAttachment(e.target.files ? e.target.files[0] : null)}
+                  className="w-full border border-gray-300 rounded-md p-2"
+                />
+              </div>
+
               <div className="flex justify-end space-x-4 mt-4">
                 <button
                   onClick={() => {
                     setShowNewRequestModal(false);
                     setNewRequestCompany('');
                     setNewRequestDetails('');
+                    setNewRequestType('');
+                    setNewRequestAttachment(null);
                   }}
                   className="bg-gray-300 hover:bg-gray-400 px-4 py-2 rounded"
                 >
@@ -437,23 +478,25 @@ const MCLandingPage: React.FC<{ onApplyOnline?: () => void }> = ({ onApplyOnline
 
                 <button
                   onClick={() => {
-                    if (newRequestCompany.trim() && newRequestDetails.trim()) {
+                    if (newRequestType.trim() && newRequestCompany.trim() && newRequestDetails.trim()) {
                       const newTicket: Ticket = {
                         id: serviceTickets.length + 1,
                         date: new Date().toISOString().split('T')[0],
                         details: newRequestDetails,
                         status: 'Pending',
-                        history: [
-                          { date: new Date().toISOString(), action: 'Request submitted' }
-                        ],
+                        history: [{ date: new Date().toISOString(), action: 'Request submitted' }],
+                        requestType: newRequestType,
+                        attachment: newRequestAttachment,
                       };
                       setServiceTickets((prev) => [...prev, newTicket]);
 
                       setShowNewRequestModal(false);
                       setNewRequestCompany('');
                       setNewRequestDetails('');
+                      setNewRequestType('');
+                      setNewRequestAttachment(null);
                     } else {
-                      alert('Please fill all fields.');
+                      alert('Please fill all required fields.');
                     }
                   }}
                   className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded"
